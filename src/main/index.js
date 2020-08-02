@@ -7,15 +7,6 @@ const Store = require("electron-store");
 
 const store = new Store();
 
-let AZURE_STORAGE_CONNECTION_STRING = store.get("connection_string") || "";
-let containerName = store.get("container_name") || "test";
-store.set("connection_string", AZURE_STORAGE_CONNECTION_STRING);
-store.set("container_name", containerName);
-let blobServiceClient = BlobServiceClient.fromConnectionString(
-  AZURE_STORAGE_CONNECTION_STRING
-);
-let containerClient = blobServiceClient.getContainerClient(containerName);
-
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
@@ -66,8 +57,8 @@ app.on("activate", () => {
 // ipc
 ipcMain.on("get-initial-config", (event, args) => {
   const res = {
-    connection_string: AZURE_STORAGE_CONNECTION_STRING,
-    container_name: containerName,
+    connection_string: store.get("connection_string") || "",
+    container_name: store.get("container_name") || "",
   };
   event.sender.send("initial-config", res);
 });
@@ -78,14 +69,6 @@ ipcMain.on("update-config", (event, args) => {
     connection_string: store.get("connection_string"),
     container_name: store.get("container_name"),
   };
-  AZURE_STORAGE_CONNECTION_STRING =
-    store.get("connection_string") ||
-    "BlobEndpoint=https://zzh.blob.core.windows.net/;QueueEndpoint=https://zzh.queue.core.windows.net/;FileEndpoint=https://zzh.file.core.windows.net/;TableEndpoint=https://zzh.table.core.windows.net/;SharedAccessSignature=sv=2019-12-12&ss=bfqt&srt=co&sp=rwdlacupx&se=2020-08-02T17:57:38Z&st=2020-08-02T09:57:38Z&spr=https&sig=FwW6GlcHbwLN9Y0sszAuC96y53vlVYypFqpNoIzPcis%3D";
-  containerName = store.get("container_name") || "test";
-  blobServiceClient = BlobServiceClient.fromConnectionString(
-    AZURE_STORAGE_CONNECTION_STRING
-  );
-  containerClient = blobServiceClient.getContainerClient(containerName);
   event.sender.send("config-updated", res);
 });
 ipcMain.on("select-folder", async (event, args) => {
@@ -119,6 +102,13 @@ ipcMain.on("select-file", (event, args) => {
   event.sender.send("file-selected", res);
 });
 ipcMain.on("upload", async (event, selectedFile) => {
+  const AZURE_STORAGE_CONNECTION_STRING = store.get("connection_string") || "";
+  const containerName = store.get("container_name") || "";
+
+  const blobServiceClient = BlobServiceClient.fromConnectionString(
+    AZURE_STORAGE_CONNECTION_STRING
+  );
+  const containerClient = blobServiceClient.getContainerClient(containerName);
   console.log(selectedFile);
   const blobName = selectedFile.split("\\").pop();
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
