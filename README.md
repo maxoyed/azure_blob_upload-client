@@ -2,6 +2,8 @@
 
 > An electron-vue project
 
+[![Build Status](https://travis-ci.org/maxoyed/azure_blob_upload-client.svg?branch=master)](https://travis-ci.org/maxoyed/azure_blob_upload-client)
+
 #### Build Setup
 
 ``` bash
