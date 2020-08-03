@@ -75,7 +75,7 @@ ipcMain.on("select-folder", async (event, args) => {
   const res = dialog.showOpenDialog({
     properties: ["openDirectory"],
   });
-  console.log(res);
+  console.log("res: ", res);
   event.sender.send("folder-selected", res);
   if (res) {
     const filename = res[0].split("\\").pop() + ".zip";
