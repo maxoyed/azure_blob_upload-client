@@ -2,7 +2,7 @@
 
 > An electron-vue project
 
-[![Build Status](https://travis-ci.org/maxoyed/azure_blob_upload-client.svg?branch=master)](https://travis-ci.org/maxoyed/azure_blob_upload-client)
+[![Build Status](https://travis-ci.org/maxoyed/azure_blob_upload-client.svg?branch=master)](https://travis-ci.org/maxoyed/azure_blob_upload-client) [![Build status](https://ci.appveyor.com/api/projects/status/rbl7kgiom6ugdvk3?svg=true)](https://ci.appveyor.com/project/maxoyed-MS/azure-blob-upload-client)
 
 #### Build Setup
 
