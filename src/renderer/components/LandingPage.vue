@@ -39,6 +39,11 @@
     <p v-if="requestId">
       Blob was uploaded successfully. requestId: {{ requestId }}
     </p>
+    <div v-if="err_msg" class="err-msg">
+      Upload Failed
+      <p>Code: {{ err_msg.code }}</p>
+      <p>Message: {{ err_msg.msg }}</p>
+    </div>
   </div>
 </template>
 
@@ -55,6 +60,7 @@ export default {
         connection_string: false,
         container_name: false,
       },
+      err_msg: false,
     };
   },
   mounted() {
@@ -81,6 +87,11 @@ export default {
       this.uploadStart = false;
       this.requestId = requestId;
     });
+    this.$electron.ipcRenderer.on("upload-failed", (event, err_msg) => {
+      console.log("Upload Failed");
+      this.uploadStart = false;
+      this.err_msg = err_msg;
+    });
     this.$electron.ipcRenderer.on("initial-config", (event, initialConfig) => {
       console.log("initial config: ", initialConfig);
       this.config = initialConfig;
@@ -96,18 +107,22 @@ export default {
     },
     selectFile() {
       this.requestId = false;
+      this.err_msg = false;
       this.$electron.ipcRenderer.send("select-file");
     },
     selectFolder() {
       this.requestId = false;
       this.compressing = true;
+      this.err_msg = false;
       this.$electron.ipcRenderer.send("select-folder");
     },
     clearSelection() {
       this.selectedFile = false;
       this.requestId = false;
+      this.err_msg = false;
     },
     upload() {
+      this.err_msg = false;
       this.$electron.ipcRenderer.send("upload", this.selectedFile);
       this.uploadStart = true;
     },

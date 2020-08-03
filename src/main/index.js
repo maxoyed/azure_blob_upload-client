@@ -113,8 +113,17 @@ ipcMain.on("upload", async (event, selectedFile) => {
   const blobName = selectedFile.split("\\").pop();
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   const data = readFileSync(selectedFile);
-  const uploadBlobResponse = await blockBlobClient.upload(data, data.length);
-  event.sender.send("upload-finished", uploadBlobResponse.requestId);
+  try {
+    const uploadBlobResponse = await blockBlobClient.upload(data, data.length);
+    event.sender.send("upload-finished", uploadBlobResponse.requestId);
+  } catch (error) {
+    const err_msg = {
+      msg: error.details.message,
+      code: error.details.Code,
+    };
+    console.log("upload fail: ", error);
+    event.sender.send("upload-failed", err_msg);
+  }
 });
 
 /**
