@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, Menu } from "electron";
 import { BlobServiceClient } from "@azure/storage-blob";
 import { readFileSync } from "fs";
 import { zip } from "zip-a-folder";
@@ -38,6 +38,27 @@ function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+  // Create the Application's main menu
+  const template = [{
+      label: "Application",
+      submenu: [
+          { label: "About Application", selector: "orderFrontStandardAboutPanel:" },
+          { type: "separator" },
+          { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
+      ]}, {
+      label: "Edit",
+      submenu: [
+          { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+          { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+          { type: "separator" },
+          { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+          { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+          { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+          { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+      ]}
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 app.on("ready", createWindow);
@@ -78,8 +99,15 @@ ipcMain.on("select-folder", async (event, args) => {
   console.log("res: ", res);
   event.sender.send("folder-selected", res);
   if (res) {
-    const filename = res[0].split("\\").pop() + ".zip";
-    const parentDir = res[0].split("\\");
+    let filename = "";
+    let parentDir = "";
+    if (res[0].split("\\").length === 1) {
+      filename = res[0].split("/").pop() + ".zip";
+      parentDir = res[0].split("/");
+    } else {
+      filename = res[0].split("\\").pop() + ".zip";
+      parentDir = res[0].split("\\");
+    }
     parentDir.pop();
     const compressedFilePath = resolve(parentDir.join("\\"), filename);
     await zip(res[0], compressedFilePath);
@@ -110,7 +138,12 @@ ipcMain.on("upload", async (event, selectedFile) => {
   );
   const containerClient = blobServiceClient.getContainerClient(containerName);
   console.log(selectedFile);
-  const blobName = selectedFile.split("\\").pop();
+  let blobName = "";
+  if (selectedFile.split("\\").length === 1) {
+    blobName = selectedFile.split("/").pop();
+  } else {
+    blobName = selectedFile.split("\\").pop();
+  }
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
   const data = readFileSync(selectedFile);
   try {
