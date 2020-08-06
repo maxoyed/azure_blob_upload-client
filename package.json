@@ -1,5 +1,5 @@
 {
-  "name": "azure_blob_upload-client",
+  "name": "amc-client",
   "version": "2.1.0",
   "author": "maxoyed <maxoyed@gmail.com>",
   "description": "AMC Client",
@@ -21,7 +21,7 @@
   },
   "build": {
     "productName": "AMC Client",
-    "appId": "com.maxoyed.azure_blob_upload-client",
+    "appId": "com.maxoyed.amc-client",
     "directories": {
       "output": "build"
     },
@@ -48,6 +48,12 @@
     },
     "win": {
       "icon": "build/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     },
     "linux": {
       "icon": "build/icons"
