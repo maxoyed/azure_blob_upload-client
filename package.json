@@ -2,7 +2,7 @@
   "name": "azure_blob_upload-client",
   "version": "2.0.0",
   "author": "maxoyed <maxoyed@gmail.com>",
-  "description": "Azure Blob Upload Client",
+  "description": "AMC Client",
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "Azure Blob Upload Client",
+    "productName": "AMC Client",
     "appId": "com.maxoyed.azure_blob_upload-client",
     "directories": {
       "output": "build"
