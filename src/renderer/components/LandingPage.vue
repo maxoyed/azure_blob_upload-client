@@ -9,8 +9,7 @@
         icon-left="folder"
         class="action_item"
         :loading="compressing"
-        >Select Folder</b-button
-      >
+      >Select Folder</b-button>
       <b-button
         @click="selectFile"
         type="is-primary"
@@ -18,14 +17,8 @@
         outlined
         icon-left="zip-box"
         class="action_item"
-        >Select Archive File</b-button
-      >
-      <b-button
-        @click="clearSelection"
-        type="is-danger"
-        icon-left="delete"
-        class="action_item"
-      ></b-button>
+      >Select Archive File</b-button>
+      <b-button @click="clearSelection" type="is-danger" icon-left="delete" class="action_item"></b-button>
       <b-button
         @click="isComponentModalActive = true"
         type="is-primary"
@@ -34,9 +27,7 @@
       ></b-button>
     </section>
     <section class="file-info">
-      <p v-if="selectedFile">
-        {{ selectedFile }}
-      </p>
+      <p v-if="selectedFile">{{ selectedFile }}</p>
     </section>
     <section class="upload">
       <b-button
@@ -48,9 +39,7 @@
         :loading="uploadStart"
         @click="upload"
         :disabled="uploadStart"
-      >
-        Upload
-      </b-button>
+      >Upload</b-button>
     </section>
     <section v-if="err_msg" class="err-msg">
       Upload Failed
@@ -73,11 +62,17 @@
 <script>
 const ModalForm = {
   props: ["connection_string", "container_name"],
+  data() {
+    return {
+      cs: this.connection_string,
+      cn: this.container_name,
+    };
+  },
   methods: {
     updateConfig() {
       const config = {
-        connection_string: this.connection_string,
-        container_name: this.container_name,
+        connection_string: this.cs,
+        container_name: this.cn,
       };
       this.$electron.ipcRenderer.send("update-config", config);
       this.$parent.close();
@@ -93,7 +88,7 @@ const ModalForm = {
                         <b-field label="Connection String">
                             <b-input
                                 type="text"
-                                v-model="connection_string"
+                                v-model="cs"
                                 placeholder="Your Connection String"
                                 required>
                             </b-input>
@@ -102,7 +97,7 @@ const ModalForm = {
                         <b-field label="Container Name">
                             <b-input
                                 type="text"
-                                v-model="container_name"
+                                v-model="cn"
                                 placeholder="Your Container Name"
                                 required>
                             </b-input>
