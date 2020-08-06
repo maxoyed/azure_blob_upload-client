@@ -2,6 +2,10 @@
   "name": "amc-client",
   "version": "2.2.1",
   "author": "maxoyed <maxoyed@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maxoyed/amc-client.git"
+  },
   "description": "AMC Client",
   "license": "MIT",
   "main": "./dist/electron/main.js",
