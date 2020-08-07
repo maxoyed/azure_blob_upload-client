@@ -32,6 +32,14 @@
     "files": [
       "dist/electron/**/*"
     ],
+    "mac": {
+      "icon": "build/icons/icon.icns",
+      "target": "dmg"
+    },
+    "win": {
+      "icon": "build/icons/icon.ico",
+      "target": "nsis"
+    },
     "dmg": {
       "contents": [
         {
@@ -46,12 +54,6 @@
           "type": "file"
         }
       ]
-    },
-    "mac": {
-      "icon": "build/icons/icon.icns"
-    },
-    "win": {
-      "icon": "build/icons/icon.ico"
     },
     "nsis": {
       "oneClick": false,
