@@ -2,7 +2,7 @@
 
 > Upload local archived file and directory to Azure Blob Container
 
-[![Build Status](https://travis-ci.org/maxoyed/azure_blob_upload-client.svg?branch=master)](https://travis-ci.org/maxoyed/azure_blob_upload-client) [![Build status](https://ci.appveyor.com/api/projects/status/rbl7kgiom6ugdvk3?svg=true)](https://ci.appveyor.com/project/maxoyed-MS/azure-blob-upload-client)
+[![Build Status](https://api.travis-ci.org/maxoyed/amc-client.svg)](https://travis-ci.org/maxoyed/azure_blob_upload-client) [![Build status](https://ci.appveyor.com/api/projects/status/rbl7kgiom6ugdvk3?svg=true)](https://ci.appveyor.com/project/maxoyed-MS/azure-blob-upload-client)
 
 #### Build Setup
 
