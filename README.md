@@ -1,21 +1,29 @@
-# azure_blob_upload-client
+# AMC Client
 
-> An electron-vue project
+> Upload local archived file and directory to Azure Blob Container
 
 [![Build Status](https://travis-ci.org/maxoyed/azure_blob_upload-client.svg?branch=master)](https://travis-ci.org/maxoyed/azure_blob_upload-client) [![Build status](https://ci.appveyor.com/api/projects/status/rbl7kgiom6ugdvk3?svg=true)](https://ci.appveyor.com/project/maxoyed-MS/azure-blob-upload-client)
 
 #### Build Setup
 
-``` bash
+```bash
 # install dependencies
-npm install
+yarn
 
 # serve with hot reload at localhost:9080
-npm run dev
+yarn run dev
 
 # build electron application for production
-npm run build
+yarn run release
 
+# update patch version
+yarn run patch
+
+# update minor version
+yarn run minor
+
+# update major version
+yarn run major
 
 ```
 
