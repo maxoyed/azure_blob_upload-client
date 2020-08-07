@@ -1,3 +1,5 @@
+![Logo](./logo.png)
+
 # AMC Client
 
 > Upload local archived file and directory to Azure Blob Container
