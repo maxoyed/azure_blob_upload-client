@@ -38,9 +38,7 @@ before_cache:
 
 branches:
   only:
-    - master
-  # except:
-  #   - "/^v\\d+\\.\\d+\\.\\d+$/"
+    - "/^v\\d+\\.\\d+\\.\\d+$/"
 # language: c
 # matrix:
 #   include:
