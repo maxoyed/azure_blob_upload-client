@@ -8,6 +8,7 @@ const Store = require("electron-store");
 const YAML = require("yamljs");
 
 const store = new Store();
+const appVersion = "2.5.0";
 
 /**
  * Set `__static` path to static files in production
@@ -100,7 +101,6 @@ const checkForUpdates = async (event) => {
   const latestVersion = yml.version;
   const fileUrl = yml.files[0].url;
   const downloadUrl = `${baseUrl}/${fileUrl}`;
-  const appVersion = process.env.npm_package_version;
   if (latestVersion != appVersion) {
     event.sender.send("check-for-updates-res", { latestVersion, downloadUrl });
   } else {
