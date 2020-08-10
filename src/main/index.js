@@ -5,6 +5,7 @@ import { zip } from "zip-a-folder";
 import { resolve } from "path";
 const axios = require("axios");
 const Store = require("electron-store");
+const YAML = require("yamljs");
 
 const store = new Store();
 
@@ -80,6 +81,35 @@ function createWindow() {
   }
 }
 
+const checkForUpdates = async (event) => {
+  const platform = process.platform;
+  let suffix = "";
+  switch (platform) {
+    case "darwin":
+      suffix = "-mac";
+      break;
+    case "linux":
+      suffix = "-linux";
+      break;
+  }
+  const baseUrl =
+    "https://github.com/maxoyed/amc-client/releases/latest/download";
+  const latestUrl = `${baseUrl}/latest${suffix}.yml`;
+  const ymlString = (await axios.get(latestUrl)).data;
+  const yml = YAML.parse(ymlString);
+  const latestVersion = yml.version;
+  const fileUrl = yml.files[0].url;
+  const downloadUrl = `${baseUrl}/${fileUrl}`;
+  const appVersion = process.env.npm_package_version;
+  if (latestVersion != appVersion) {
+    event.sender.send("check-for-updates-res", { latestVersion, downloadUrl });
+  } else {
+    console.log("Already Updated");
+  }
+  console.log("latestVersion: ", latestVersion);
+  console.log("appVersion: ", appVersion);
+};
+
 app.on("ready", createWindow);
 
 app.on("window-all-closed", () => {
@@ -103,6 +133,9 @@ ipcMain.on("get-initial-config", (event, args) => {
     webhook: store.get("webhook") || "",
   };
   event.sender.send("initial-config", res);
+});
+ipcMain.on("check-for-updates", (event, args) => {
+  checkForUpdates(event);
 });
 ipcMain.on("update-config", (event, args) => {
   store.set("connection_string", args.connection_string);

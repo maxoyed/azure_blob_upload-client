@@ -171,6 +171,10 @@ export default {
   },
   mounted() {
     this.$electron.ipcRenderer.send("get-initial-config");
+    this.$electron.ipcRenderer.send("check-for-updates");
+    this.$electron.ipcRenderer.on("check-for-updates-res", (event, data) => {
+      this.downloadLatest(data.downloadUrl);
+    });
     this.$electron.ipcRenderer.on("file-selected", (event, data) => {
       console.log(data);
       if (data) {
@@ -230,15 +234,17 @@ export default {
     });
   },
   methods: {
+    downloadLatest(downloadUrl) {
+      this.$buefy.dialog.confirm({
+        message: "Would you like to download the latest version?",
+        onConfirm: () => this.$electron.shell.openExternal(downloadUrl),
+      });
+    },
     selectFile() {
-      // this.requestId = false;
-      // this.blobUploadUrl = false
       this.clearSelection();
       this.$electron.ipcRenderer.send("select-file");
     },
     selectFolder() {
-      // this.requestId = false;
-      // this.blobUploadUrl  = false
       this.clearSelection();
       this.$electron.ipcRenderer.send("select-folder");
     },

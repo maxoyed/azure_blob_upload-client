@@ -73,6 +73,7 @@
     "electron-store": "^6.0.0",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
+    "yamljs": "^0.3.0",
     "zip-a-folder": "^0.0.12"
   },
   "devDependencies": {
