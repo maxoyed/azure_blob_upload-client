@@ -39,26 +39,44 @@ function createWindow() {
     mainWindow = null;
   });
   // Create the Application's main menu
-  const template = [{
+  const template = [
+    {
       label: "Application",
       submenu: [
-          { label: "About Application", selector: "orderFrontStandardAboutPanel:" },
-          { type: "separator" },
-          { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
-      ]}, {
+        {
+          label: "About Application",
+          selector: "orderFrontStandardAboutPanel:",
+        },
+        { type: "separator" },
+        {
+          label: "Quit",
+          accelerator: "Command+Q",
+          click: function() {
+            app.quit();
+          },
+        },
+      ],
+    },
+    {
       label: "Edit",
       submenu: [
-          { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
-          { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
-          { type: "separator" },
-          { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
-          { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
-          { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
-          { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
-      ]}
+        { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+        { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+        { type: "separator" },
+        { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+        { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+        { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+        {
+          label: "Select All",
+          accelerator: "CmdOrCtrl+A",
+          selector: "selectAll:",
+        },
+      ],
+    },
   ];
-
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  if (process.platform === "darwin") {
+    Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  }
 }
 
 app.on("ready", createWindow);
@@ -80,15 +98,18 @@ ipcMain.on("get-initial-config", (event, args) => {
   const res = {
     connection_string: store.get("connection_string") || "",
     container_name: store.get("container_name") || "",
+    url: store.get("url") || "",
   };
   event.sender.send("initial-config", res);
 });
 ipcMain.on("update-config", (event, args) => {
   store.set("connection_string", args.connection_string);
   store.set("container_name", args.container_name);
+  store.set("url", args.url);
   const res = {
     connection_string: store.get("connection_string"),
     container_name: store.get("container_name"),
+    url: store.get("url"),
   };
   event.sender.send("config-updated", res);
 });
@@ -148,13 +169,18 @@ ipcMain.on("upload", async (event, selectedFile) => {
   const data = readFileSync(selectedFile);
   try {
     const uploadBlobResponse = await blockBlobClient.upload(data, data.length);
-    event.sender.send("upload-finished", uploadBlobResponse.requestId);
+    const blobUrl = `${store.get("url")}/${store.get(
+      "container_name"
+    )}/${blobName}`;
+    const requestId = uploadBlobResponse.requestId;
+    console.log("uploadBlobResponse: ", uploadBlobResponse);
+    event.sender.send("upload-finished", { requestId, blobUrl });
   } catch (error) {
+    console.log("upload fail: ", error);
     const err_msg = {
       msg: error.details.message,
       code: error.details.Code,
     };
-    console.log("upload fail: ", error);
     event.sender.send("upload-failed", err_msg);
   }
 });

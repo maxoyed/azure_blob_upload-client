@@ -9,7 +9,8 @@
         icon-left="folder"
         class="action_item"
         :loading="compressing"
-      >Select Folder</b-button>
+        >Select Folder</b-button
+      >
       <b-button
         @click="selectFile"
         type="is-primary"
@@ -17,8 +18,14 @@
         outlined
         icon-left="zip-box"
         class="action_item"
-      >Select Archive File</b-button>
-      <b-button @click="clearSelection" type="is-danger" icon-left="delete" class="action_item"></b-button>
+        >Select Archive File</b-button
+      >
+      <b-button
+        @click="clearSelection"
+        type="is-danger"
+        icon-left="delete"
+        class="action_item"
+      ></b-button>
       <b-button
         @click="isComponentModalActive = true"
         type="is-primary"
@@ -27,7 +34,16 @@
       ></b-button>
     </section>
     <section class="file-info">
-      <p v-if="selectedFile">{{ selectedFile }}</p>
+      <p v-if="selectedFile">
+        {{ selectedFile }}
+        <span @click="copyUrl">
+          <b-icon
+            class="copy-icon"
+            icon="content-copy"
+            size="is-small"
+          ></b-icon>
+        </span>
+      </p>
     </section>
     <section class="upload">
       <b-button
@@ -39,12 +55,8 @@
         :loading="uploadStart"
         @click="upload"
         :disabled="uploadStart"
-      >Upload</b-button>
-    </section>
-    <section v-if="err_msg" class="err-msg">
-      Upload Failed
-      <p>Code: {{ err_msg.code }}</p>
-      <p>Message: {{ err_msg.msg }}</p>
+        >Upload</b-button
+      >
     </section>
     <b-modal
       :active.sync="isComponentModalActive"
@@ -61,11 +73,12 @@
 
 <script>
 const ModalForm = {
-  props: ["connection_string", "container_name"],
+  props: ["connection_string", "container_name", "url"],
   data() {
     return {
       cs: this.connection_string,
       cn: this.container_name,
+      u: this.url,
     };
   },
   methods: {
@@ -73,6 +86,7 @@ const ModalForm = {
       const config = {
         connection_string: this.cs,
         container_name: this.cn,
+        url: this.u,
       };
       this.$electron.ipcRenderer.send("update-config", config);
       this.$parent.close();
@@ -85,6 +99,15 @@ const ModalForm = {
                         <p class="modal-card-title">Connection Config</p>
                     </header>
                     <section class="modal-card-body">
+                        <b-field label="Service URL">
+                            <b-input
+                                type="text"
+                                v-model="u"
+                                placeholder="Your Blob Service URL"
+                                required>
+                            </b-input>
+                        </b-field>
+
                         <b-field label="Connection String">
                             <b-input
                                 type="text"
@@ -125,6 +148,7 @@ export default {
       config: {
         connection_string: false,
         container_name: false,
+        url: false,
       },
       isComponentModalActive: false,
       err_msg: false,
@@ -150,20 +174,30 @@ export default {
       this.selectedFile = data;
       this.compressing = false;
     });
-    this.$electron.ipcRenderer.on("upload-finished", (event, requestId) => {
+    this.$electron.ipcRenderer.on("upload-finished", (event, res) => {
       this.$buefy.notification.open({
         duration: 5000,
         message: `Blob was uploaded successfully.`,
         position: "is-bottom-right",
         type: "is-success",
+        hasIcon: true,
       });
       this.uploadStart = false;
-      this.requestId = requestId;
+      this.requestId = res.requestId;
+      this.selectedFile = res.blobUrl;
+      console.log("blob url: ", res.blobUrl);
     });
     this.$electron.ipcRenderer.on("upload-failed", (event, err_msg) => {
       console.log("Upload Failed");
       this.uploadStart = false;
       this.err_msg = err_msg;
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Upload Failed: ${this.err_msg.code}<br/>Please check your connection config.`,
+        position: "is-bottom-right",
+        type: "is-danger",
+        hasIcon: true,
+      });
     });
     this.$electron.ipcRenderer.on("initial-config", (event, initialConfig) => {
       console.log("initial config: ", initialConfig);
@@ -176,6 +210,7 @@ export default {
         message: `Config updated successfully.`,
         position: "is-bottom-right",
         type: "is-success",
+        hasIcon: true,
       });
       this.config = config;
     });
@@ -190,6 +225,16 @@ export default {
       this.requestId = false;
       this.err_msg = false;
       this.$electron.ipcRenderer.send("select-folder");
+    },
+    copyUrl() {
+      console.log("clipboard: ", this.selectedFile);
+      this.$electron.clipboard.writeText(this.selectedFile);
+      this.$buefy.notification.open({
+        duration: 5000,
+        message: `Content Copied`,
+        position: "is-bottom-right",
+        type: "is-success",
+      });
     },
     clearSelection() {
       this.selectedFile = false;
@@ -225,6 +270,12 @@ export default {
 }
 section {
   height: 15%;
+}
+.copy-icon {
+  cursor: pointer;
+}
+.copy-icon:hover {
+  color: #7957d5;
 }
 .config {
   display: flex;
