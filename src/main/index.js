@@ -3,6 +3,7 @@ import { BlobServiceClient } from "@azure/storage-blob";
 import { readFileSync } from "fs";
 import { zip } from "zip-a-folder";
 import { resolve } from "path";
+const axios = require("axios");
 const Store = require("electron-store");
 
 const store = new Store();
@@ -99,6 +100,7 @@ ipcMain.on("get-initial-config", (event, args) => {
     connection_string: store.get("connection_string") || "",
     container_name: store.get("container_name") || "",
     url: store.get("url") || "",
+    webhook: store.get("webhook") || "",
   };
   event.sender.send("initial-config", res);
 });
@@ -106,10 +108,12 @@ ipcMain.on("update-config", (event, args) => {
   store.set("connection_string", args.connection_string);
   store.set("container_name", args.container_name);
   store.set("url", args.url);
+  store.set("webhook", args.webhook);
   const res = {
     connection_string: store.get("connection_string"),
     container_name: store.get("container_name"),
     url: store.get("url"),
+    webhook: store.get("webhook"),
   };
   event.sender.send("config-updated", res);
 });
@@ -173,15 +177,22 @@ ipcMain.on("upload", async (event, selectedFile) => {
       "container_name"
     )}/${blobName}`;
     const requestId = uploadBlobResponse.requestId;
-    console.log("uploadBlobResponse: ", uploadBlobResponse);
+    // console.log("uploadBlobResponse: ", uploadBlobResponse);
     event.sender.send("upload-finished", { requestId, blobUrl });
+    const webhook = store.get("webhook");
+    if (webhook) {
+      const res = await axios.post(webhook, { blobUrl });
+      console.log("webhook response: ", res.data);
+    } else {
+      console.info("wehbook config not found");
+    }
   } catch (error) {
     console.log("upload fail: ", error);
-    const err_msg = {
-      msg: error.details.message,
-      code: error.details.Code,
-    };
-    event.sender.send("upload-failed", err_msg);
+    // const err_msg = {
+    //   msg: error.details.message,
+    //   code: error.details.Code,
+    // };
+    event.sender.send("upload-failed");
   }
 });
 

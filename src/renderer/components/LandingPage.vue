@@ -36,6 +36,9 @@
     <section class="file-info">
       <p v-if="selectedFile">
         {{ selectedFile }}
+      </p>
+      <p v-if="blobUploadUrl">
+        {{ blobUploadUrl }}
         <span @click="copyUrl">
           <b-icon
             class="copy-icon"
@@ -73,12 +76,13 @@
 
 <script>
 const ModalForm = {
-  props: ["connection_string", "container_name", "url"],
+  props: ["connection_string", "container_name", "url", "webhook"],
   data() {
     return {
       cs: this.connection_string,
       cn: this.container_name,
       u: this.url,
+      wh: this.webhook,
     };
   },
   methods: {
@@ -87,6 +91,7 @@ const ModalForm = {
         connection_string: this.cs,
         container_name: this.cn,
         url: this.u,
+        webhook: this.wh,
       };
       this.$electron.ipcRenderer.send("update-config", config);
       this.$parent.close();
@@ -104,6 +109,15 @@ const ModalForm = {
                                 type="text"
                                 v-model="u"
                                 placeholder="Your Blob Service URL"
+                                required>
+                            </b-input>
+                        </b-field>
+
+                        <b-field label="Webhook URL">
+                            <b-input
+                                type="text"
+                                v-model="wh"
+                                placeholder="Your webhook URL"
                                 required>
                             </b-input>
                         </b-field>
@@ -142,6 +156,7 @@ export default {
   data() {
     return {
       selectedFile: false,
+      blobUploadUrl: false,
       uploadStart: false,
       requestId: false,
       compressing: false,
@@ -149,9 +164,9 @@ export default {
         connection_string: false,
         container_name: false,
         url: false,
+        webhook: false,
       },
       isComponentModalActive: false,
-      err_msg: false,
     };
   },
   mounted() {
@@ -184,16 +199,15 @@ export default {
       });
       this.uploadStart = false;
       this.requestId = res.requestId;
-      this.selectedFile = res.blobUrl;
+      this.blobUploadUrl = res.blobUrl;
       console.log("blob url: ", res.blobUrl);
     });
-    this.$electron.ipcRenderer.on("upload-failed", (event, err_msg) => {
+    this.$electron.ipcRenderer.on("upload-failed", (event) => {
       console.log("Upload Failed");
       this.uploadStart = false;
-      this.err_msg = err_msg;
       this.$buefy.notification.open({
         duration: 5000,
-        message: `Upload Failed: ${this.err_msg.code}<br/>Please check your connection config.`,
+        message: `Upload Failed.<br/>Please check your config and network.`,
         position: "is-bottom-right",
         type: "is-danger",
         hasIcon: true,
@@ -217,13 +231,15 @@ export default {
   },
   methods: {
     selectFile() {
-      this.requestId = false;
-      this.err_msg = false;
+      // this.requestId = false;
+      // this.blobUploadUrl = false
+      this.clearSelection();
       this.$electron.ipcRenderer.send("select-file");
     },
     selectFolder() {
-      this.requestId = false;
-      this.err_msg = false;
+      // this.requestId = false;
+      // this.blobUploadUrl  = false
+      this.clearSelection();
       this.$electron.ipcRenderer.send("select-folder");
     },
     copyUrl() {
@@ -238,13 +254,12 @@ export default {
     },
     clearSelection() {
       this.selectedFile = false;
+      this.blobUploadUrl = false;
       this.requestId = false;
-      this.err_msg = false;
       this.uploadStart = false;
       this.compressing = false;
     },
     upload() {
-      this.err_msg = false;
       this.$electron.ipcRenderer.send("upload", this.selectedFile);
       this.uploadStart = true;
     },
