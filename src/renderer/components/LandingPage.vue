@@ -261,8 +261,8 @@ export default {
       this.$electron.ipcRenderer.send("select-folder");
     },
     copyUrl() {
-      console.log("clipboard: ", this.selectedFile);
-      this.$electron.clipboard.writeText(this.selectedFile);
+      console.log("clipboard: ", this.blobUploadUrl);
+      this.$electron.clipboard.writeText(this.blobUploadUrl);
       this.$buefy.notification.open({
         duration: 5000,
         message: `Content Copied`,
