@@ -1,14 +1,22 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu } from "electron";
 import { BlobServiceClient } from "@azure/storage-blob";
-import { readFileSync } from "fs";
+import { readFileSync, stat } from "fs";
 import { zip } from "zip-a-folder";
 import { resolve } from "path";
 const axios = require("axios");
 const Store = require("electron-store");
 const YAML = require("yamljs");
+const path = require("path");
+import { AbortController } from "@azure/abort-controller";
+
+const packageJson = JSON.parse(
+  readFileSync(path.resolve(__dirname, "..", "..", "package.json"))
+);
 
 const store = new Store();
-const appVersion = "2.5.0";
+const appVersion = packageJson.version;
+
+let controller = new AbortController();
 
 /**
  * Set `__static` path to static files in production
@@ -101,13 +109,25 @@ const checkForUpdates = async (event) => {
   const latestVersion = yml.version;
   const fileUrl = yml.files[0].url;
   const downloadUrl = `${baseUrl}/${fileUrl}`;
-  if (latestVersion != appVersion) {
+  if (latestVersion > appVersion) {
     event.sender.send("check-for-updates-res", { latestVersion, downloadUrl });
   } else {
     console.log("Already Updated");
   }
   console.log("latestVersion: ", latestVersion);
   console.log("appVersion: ", appVersion);
+};
+
+const getFileSize = (filePath) => {
+  return new Promise((resolve, reject) => {
+    stat(filePath, (err, stats) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(stats.size);
+      }
+    });
+  });
 };
 
 app.on("ready", createWindow);
@@ -192,7 +212,14 @@ ipcMain.on("upload", async (event, selectedFile) => {
   const containerName = store.get("container_name") || "";
 
   const blobServiceClient = BlobServiceClient.fromConnectionString(
-    AZURE_STORAGE_CONNECTION_STRING
+    AZURE_STORAGE_CONNECTION_STRING,
+    {
+      retryOptions: {
+        maxTries: 10,
+        retryPolicyType: 1,
+        tryTimeoutInMs: 0,
+      },
+    }
   );
   const containerClient = blobServiceClient.getContainerClient(containerName);
   console.log(selectedFile);
@@ -203,14 +230,29 @@ ipcMain.on("upload", async (event, selectedFile) => {
     blobName = selectedFile.split("\\").pop();
   }
   const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-  const data = readFileSync(selectedFile);
+  const totalSize = await getFileSize(selectedFile);
+  console.log("file size: ", totalSize);
+  controller = new AbortController();
+  const abortSignal = controller.signal;
   try {
-    const uploadBlobResponse = await blockBlobClient.upload(data, data.length);
+    const uploadBlobResponse = await blockBlobClient.uploadFile(selectedFile, {
+      blockSize: 4 * 1024 * 1024,
+      concurrency: 5,
+      abortSignal,
+      onProgress: (ev) => {
+        const progress = {
+          loadedBytes: ev.loadedBytes,
+          totalSize,
+        };
+        mainWindow.setProgressBar(ev.loadedBytes / totalSize);
+        event.sender.send("upload-progress", progress);
+      },
+    });
     const blobUrl = `${store.get("url")}/${store.get(
       "container_name"
     )}/${blobName}`;
     const requestId = uploadBlobResponse.requestId;
-    // console.log("uploadBlobResponse: ", uploadBlobResponse);
+    console.log("uploadBlobResponse: ", uploadBlobResponse);
     event.sender.send("upload-finished", { requestId, blobUrl });
     const webhook = store.get("webhook");
     if (webhook) {
@@ -220,13 +262,20 @@ ipcMain.on("upload", async (event, selectedFile) => {
       console.info("wehbook config not found");
     }
   } catch (error) {
-    console.log("upload fail: ", error);
-    // const err_msg = {
-    //   msg: error.details.message,
-    //   code: error.details.Code,
-    // };
-    event.sender.send("upload-failed");
+    console.log("error name: ", error.name);
+    if (error.hasOwnProperty("request")) {
+      console.warn("webhook url cannot be visit");
+    } else if (error.name === "AbortError") {
+      console.log("Operation was aborted by the user");
+    } else {
+      console.log("upload fail: ", error);
+      event.sender.send("upload-failed");
+    }
   }
+  mainWindow.setProgressBar(-1);
+});
+ipcMain.on("abort", async (event, args) => {
+  controller.abort();
 });
 
 /**

@@ -47,6 +47,12 @@
           ></b-icon>
         </span>
       </p>
+      <b-progress
+        v-if="progress"
+        :value="progress"
+        show-value
+        format="percent"
+      ></b-progress>
     </section>
     <section class="upload">
       <b-button
@@ -158,6 +164,7 @@ export default {
       selectedFile: false,
       blobUploadUrl: false,
       uploadStart: false,
+      progress: false,
       requestId: false,
       compressing: false,
       config: {
@@ -192,6 +199,11 @@ export default {
       console.log(data);
       this.selectedFile = data;
       this.compressing = false;
+    });
+    this.$electron.ipcRenderer.on("upload-progress", (event, res) => {
+      console.log(`Upload in progress: ${res.loadedBytes} / ${res.totalSize}`);
+      this.progress =
+        (parseInt(res.loadedBytes) / parseInt(res.totalSize)) * 100;
     });
     this.$electron.ipcRenderer.on("upload-finished", (event, res) => {
       this.$buefy.notification.open({
@@ -261,9 +273,11 @@ export default {
     clearSelection() {
       this.selectedFile = false;
       this.blobUploadUrl = false;
+      this.progress = false;
       this.requestId = false;
       this.uploadStart = false;
       this.compressing = false;
+      this.$electron.ipcRenderer.send("abort");
     },
     upload() {
       this.$electron.ipcRenderer.send("upload", this.selectedFile);
